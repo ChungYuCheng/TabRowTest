@@ -2,10 +2,14 @@ package com.example.tabrowtest
 
 import android.content.res.Configuration
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -18,6 +22,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.selected
@@ -27,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.tabrowtest.ui.theme.TabRowTestTheme
 import com.google.android.material.color.MaterialColors
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,39 +44,80 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    TabScreen(1)
+                    TabScreen(0)
                 }
             }
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @UiComposable
 @Composable
 fun TabScreen(tab: Int) {
-    var tabIndex by remember { mutableIntStateOf(tab) }
 
-    val tabs = listOf("Home", "About", "Settings")
+//    val tabs = listOf("Home", "About", "Settings", "example", "sample", "member", "shopping cart")
+    val tabs = listOf("商品", "評價", "詳情", "規格", "推薦")
+
+    val state = rememberPagerState(
+        initialPage = 0,
+        initialPageOffsetFraction = 0f
+    ) {
+        tabs.size
+    }
+
+    val scope = rememberCoroutineScope()
+
+    val tabIndex = state.currentPage
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        TabRow(selectedTabIndex = tabIndex) {
+        ScrollableTabRow(
+            edgePadding = 0.dp,
+            selectedTabIndex = tabIndex
+        ) {
             tabs.forEachIndexed { index, title ->
                 Tab(
                     selected = tabIndex == index,
-                    onClick = { tabIndex = index }
+                    onClick = {
+                        scope.launch {
+                            state.animateScrollToPage(index)
+                        }
+                    },
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .border(width = 1.dp, color = Color.Black)
+                        .background(MaterialTheme.colorScheme.onPrimaryContainer),
+                    selectedContentColor = MaterialTheme.colorScheme.onSecondaryContainer
                 ) {
                     Text(
                         text = title,
-//                        style = MaterialTheme.typography.headlineSmall
-                        style = MaterialTheme.typography.titleLarge
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .padding(vertical = 10.dp, horizontal = 20.dp)
                     )
                 }
             }
         }
-        when (tabIndex) {
-            0 -> HomeScreen()
-            1 -> AboutScreen()
-            2 -> SettingsScreen()
+
+        HorizontalPager(state = state) {index ->
+            when (index) {
+                0 -> {
+                    HomeScreen()
+                }
+                1 -> {
+                    AboutScreen()
+                }
+                2 -> {
+                    SettingsScreen()
+                }
+                3 -> {
+                    AboutScreen()
+                }
+                4 -> {
+                    AboutScreen()
+                }
+            }
         }
     }
 }
@@ -151,8 +198,12 @@ fun AboutScreen() {
                     .border(
                         BorderStroke(borderWidth, rainbowColorBrush),
                         CircleShape
-                    ).aspectRatio(16f / 9f)
-                    .blur(radius = 8.dp, edgeTreatment = BlurredEdgeTreatment(RoundedCornerShape(8.dp))),
+                    )
+                    .aspectRatio(16f / 9f)
+                    .blur(
+                        radius = 8.dp,
+                        edgeTreatment = BlurredEdgeTreatment(RoundedCornerShape(8.dp))
+                    ),
                 contentScale = ContentScale.Crop
             )
         }
